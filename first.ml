@@ -34,7 +34,7 @@ let fact n =
   let rec facti (n, res) = if n = 1 then res else facti(n - 1, n * res) in
   facti (n, 1);;
 
-let rec pow_ (x, n) = if n = 1 then x else x * pow (x, n- 1);;
+let rec pow_ (x, n) = if n = 1 then x else x * pow_ (x, n- 1);;
 
 let rec powi (x, n, res) = if n = 1 then res * x else powi (x, n - 1, res * x);;
 
@@ -51,4 +51,28 @@ let max_ascii str =
       current else
         max_ascii_(String.sub str 1 (strlen - 1), max (Char.code char1) current) in
   max_ascii_(str, 0);;
+
+(* curry *)
+let concat_curry s1 = fun s2 -> s1 ^ s2;;
+
+let deriv f =
+  let dx = 0.1e-10 in
+  fun x -> (f(x +. dx) -. f(x)) /. dx;;
+
+let fixpoint f init =
+  let threshold = 0.1e-10 in
+  let rec loop x =
+    let next = f x in
+    if abs_float(x -. next) < threshold then x
+    else loop next
+  in loop init;;
+
+let newton_transform f = fun x -> x -. f(x) /. (deriv f x);;
+
+let newton_method f guess = fixpoint(newton_transform f) guess;;
+
+(* curry pow *)
+let rec powc = fun n x -> if n = 1 then x else x * powc (n - 1) x ;;
+(* reverse powc *)
+let rec powc2 = fun n x -> if n = 1 then x else x * powc x (n - 1);;
 

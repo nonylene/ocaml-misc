@@ -92,3 +92,85 @@ let rec repeat f n x = if n > 0 then repeat f (n - 1) (f x) else x;;
 let fib n =
   let (fibn, _) = repeat (fun (a1, a2) -> (a1 + a2, a1)) n (1,0)
   in fibn;;
+
+(* charpter 5 list *)
+let rec downto0  = function 0 -> [0] | n -> n::downto0 (n-1);;
+
+let rec roman hash =
+  function 0 -> "" | num ->
+    let rec pick = function (r, a)::rest -> if num / r > 0 then (r, a) else pick rest in
+    let (r, a) = pick hash in
+    a ^ roman hash (num - r)
+;;
+
+let rec concat = function [] -> [] | (x::rest) -> x @ concat rest;;
+
+let rec zip = function [] -> (fun _ -> []) | (x::xs) ->
+  (function [] -> [] | (y::ys) -> (x,y)::zip xs ys)
+;;
+
+let rec filter p = function [] -> [] | x::xs ->
+  let tail = filter p xs in
+  if p x then x::tail else tail
+;;
+
+let rec belong a = function [] -> false | x::xs ->
+  x = a || belong a xs
+;;
+
+let rec intersect = function [] -> fun _ -> [] | x::xs ->
+  fun yy ->
+    let tail = intersect xs yy
+    in if belong x yy then x::tail else tail
+;;
+
+let rec union a = function [] -> a | y::ys ->
+  let tail = union a ys in
+  if belong y tail then tail else y::tail
+;;
+
+let diff a b =
+  let i = intersect a b and u = union a b in
+  (* intersect, union*)
+  let rec diff_ a = function [] -> [] | b::bs ->
+    let tail = diff_ a bs in
+    if belong b a then tail else b::tail in
+  diff_ i u
+;;
+
+let rec quick = function[] -> [] | [x] -> [x] | x :: xs ->  (* x is the pivot *)
+  let rec partition left right = function [] -> (quick left) @ (x :: quick right) | y :: ys ->
+    if x < y then partition left (y :: right) ys else partition (y :: left) right ys
+  in partition [] [] xs;;
+
+
+let partition piv l =
+  match l with [] -> ([], []) | _ ->
+    let rec partition_ one two =
+      function [] -> (one, two) | a::ls ->
+        if piv <= a then partition_ one (a::two) ls else partition_ (a::one) two ls
+  in partition_ [] [] l
+;;
+
+let rec quicker l sorted = 
+  match l with [] -> sorted | [x] -> x::sorted | x::xs ->
+  let small, big = partition x xs in
+  quicker small (x::(quicker big sorted))
+;;
+
+let squares r =
+  let max = int_of_float (sqrt (float_of_int r)) in
+  let rec squares_ = function -1 -> fun _ -> [] | x ->
+    fun y ->
+      if x < y then squares_ (x-1) 0
+      else
+        let a = x*x + y*y in
+        if a > r then squares_ (x-1) 0
+        else if a = r then (x,y)::squares_ (x-1) 0
+        else squares_ x (y+1)
+  in squares_ max 0
+;;
+
+(* r: result *)
+let rec map2 p l r = match l with [] -> r | x::xs -> map2 p xs (r@[p x]) ;;
+

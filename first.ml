@@ -76,3 +76,19 @@ let rec powc = fun n x -> if n = 1 then x else x * powc (n - 1) x ;;
 (* reverse powc *)
 let rec powc2 = fun n x -> if n = 1 then x else x * powc x (n - 1);;
 
+let curry f x y = f (x, y);;
+
+let average (x, y) = (x +. y) /. 2.0;;
+
+let curried_avg = curry average;;
+
+(* uncurry *)
+let uncurry = fun x y ->
+  let (y1, y2) = y in
+  x y1 y2;;
+
+let rec repeat f n x = if n > 0 then repeat f (n - 1) (f x) else x;;
+
+let fib n =
+  let (fibn, _) = repeat (fun (a1, a2) -> (a1 + a2, a1)) n (1,0)
+  in fibn;;

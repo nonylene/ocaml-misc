@@ -291,4 +291,13 @@ let hoge_4 a = (
 
 let hoge_5 = function Left f -> (fun x -> Left(f x)) | Right f -> (fun x -> Right(f x));;
 
+type pointI = {get : unit -> int ; set: int -> unit ; inc: unit -> unit};;
 
+let pointC x = 
+  let rec this () = 
+    {
+      get= (fun () -> !x);
+      set= (fun value -> x:= value);
+      inc= (fun () -> (this()).set ((this()).get () + 1 ) );
+  } in
+  this ();;

@@ -1,5 +1,5 @@
 print_string "hello, world!\n";;
-
+(*  *)
 let dollar_to_yen (dollar: float): int = int_of_float (dollar *. 111.12);;
 
 let dollar_to_yen_string (dollar: float): string = 
@@ -17,7 +17,6 @@ let x = (1,2,"aa", dollar_to_yen_string);;
 let (a,b,c,d) = x;;
 
 let geo_mean (x,y) = sqrt (x *. y) ;;
-print_float(geo_mean(2.1,2.3));;
 
 (* matrix * vector *)
 let prodMatVec (mat, vec) =
@@ -173,4 +172,123 @@ let squares r =
 
 (* r: result *)
 let rec map2 p l r = match l with [] -> r | x::xs -> map2 p xs (r@[p x]) ;;
+
+type nat = Zero | OneMoreThan of nat;;
+
+let rec int_of_nat = function Zero -> 0 | OneMoreThan (x) -> 1 + int_of_nat x;;
+
+let rec add m n = match m with Zero -> n | OneMoreThan(x) -> OneMoreThan (add x n);;
+
+let rec mul m n = match m with Zero -> Zero | OneMoreThan(x) -> add n (mul x n);;
+
+let rec monus m = function Zero -> m | OneMoreThan(x) ->
+  match m with Zero -> Zero | OneMoreThan(y) -> monus y x;;
+
+let rec minus m = function Zero -> Some m | OneMoreThan(x) ->
+  match m with Zero -> None | OneMoreThan(y) -> minus y x;;
+
+let a = (OneMoreThan (OneMoreThan (OneMoreThan (OneMoreThan Zero))));;
+let b = (OneMoreThan (OneMoreThan (OneMoreThan  Zero)));;
+
+type 'a tree = Lf | Br of 'a * 'a tree * 'a tree;;
+
+let rec comptree x = function 0 -> Br (x, Lf, Lf) | n -> Br (x, (comptree x (n - 1)), (comptree x (n -1)));;
+
+let rec inord t n = match t with Lf -> n |
+  Br(x, left, right) -> inord left (x:: inord right n);;
+
+let rec postord t n = match t with Lf -> n |
+  Br(x, left, right) -> postord left (postord right (x::n));;
+
+let rec reflect = function Lf -> Lf | Br(x, left, right) -> Br(x, reflect right, reflect left);;
+
+let t1 = Br(1, Br(2, Br(4, Lf, Lf),Br(5, Lf, Lf)),Br(3, Br(6, Lf, Lf),Br(7, Lf, Lf)));
+
+type arith = Const of int | Add of arith * arith | Mul of arith * arith;;
+
+let exp = Mul (Add (Const 3, Const 4), Add (Const 2, Const 5));;
+
+let rec string_of_arith = function Const x -> string_of_int x 
+  | Add(x,y) -> "(" ^ string_of_arith x ^ "+" ^ string_of_arith y ^ ")"
+  | Mul(x, y) -> string_of_arith x ^ "*" ^ string_of_arith y
+;;
+
+let rec expand = function
+  | Mul(x, y) -> (
+    let rec mul_adds xx = function Add(yy, yys) ->
+      Add(Mul(xx, yy), mul_adds xx yys) | yy -> Mul(xx, yy) in
+
+    let rec expanded_mul ex ey = match ex with Add(exx, exs) ->
+        Add(mul_adds exx ey, expanded_mul exs ey)
+       | _ -> mul_adds ex ey
+
+    in expanded_mul (expand x) (expand y)
+    )
+  | Add(x, y) -> Add(expand x, expand y)
+  | Const x -> Const x
+;;
+
+let print_int_utl x = print_string ((string_of_int x) ^ "\n");;
+
+type 'a seq = Cons of 'a * (unit -> 'a seq);;
+
+let rec from n = Cons(n, fun () -> from(n+1));;
+
+let rec filter_seq f seq = 
+  let rec next f (Cons(x,tail)) = if f x then next f (tail()) else Cons(x,tail) in
+  let Cons(init, tail) = next f seq in
+  Cons(init, fun () -> filter_seq f (tail()))
+;;
+
+let rec seq_get n (Cons(x,tail)) =
+  if n = 0 then x else seq_get (n-1) (tail())
+;;
+
+let rec skip_until n (Cons(x, tail)) = 
+  if x > n then Cons(x, tail) else skip_until n (tail())
+;;
+
+let shift n seq =
+  let start = n * n in
+  filter_seq (fun x -> x mod n = 0) seq
+;;
+
+(* 0 based index *)
+let get_prime index = 
+  let rec prime_seq (Cons(x, tail)) = Cons(x, fun () ->
+    (* next prime seq (filtered by next x) *)
+    prime_seq (
+      (* next seq (filtered by x) *)
+      shift x (tail())
+    )) in
+  seq_get index (prime_seq (from 2))
+;;
+
+type ('a, 'b) sum = Left of 'a | Right of 'b;;
+
+let hoge_2(a,b) =
+  match a with Left sa -> 
+    (match b with Left sb -> Left(Left(sa, sb)) | Right sb -> Right(Left (sa,sb)))
+    | Right sa ->
+    match b with Left sb -> Right(Right (sa, sb)) | Right sb -> Left(Right(sa,sb))
+;;
+
+(* double match !!! *)
+let hoge_2(a,b) =
+  match a, b with
+  | Left sa, Left sb -> Left(Left(sa, sb))
+  | Left sa, Right sb -> Right(Left(sa, sb))
+  | Right sa, Left sb -> Right(Right(sa, sb))
+  | Right sa, Right sb -> Left(Right(sa, sb))
+;;
+
+let hoge_3(a,b) = function Left sa -> a(sa) | Right sa -> b(sa);;
+
+let hoge_4 a = (
+  (fun x -> a(Left(x))),
+  (fun x -> a(Right(x)))
+);;
+
+let hoge_5 = function Left f -> (fun x -> Left(f x)) | Right f -> (fun x -> Right(f x));;
+
 

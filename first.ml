@@ -293,11 +293,63 @@ let hoge_5 = function Left f -> (fun x -> Left(f x)) | Right f -> (fun x -> Righ
 
 type pointI = {get : unit -> int ; set: int -> unit ; inc: unit -> unit};;
 
-let pointC x = 
-  let rec this () = 
+let pointC x this () =
     {
       get= (fun () -> !x);
       set= (fun value -> x:= value);
-      inc= (fun () -> (this()).set ((this()).get () + 1 ) );
-  } in
-  this ();;
+      inc= (fun () -> (this()).set ((this()).get () + 1 ));
+  }
+;;
+
+let new_point x =
+  let x = ref x in
+  let rec this () = pointC x this () in
+  this()
+;;
+
+(* let ref x = { contents = x };; *)
+(*  *)
+(* let (!) x = x.contents;; *)
+(* let (:=) x y = x.contents <- y;; *)
+(* let incr x = x := !x + 1;; *)
+
+let fact_imp n =
+  if n < 0 then raise (Invalid_argument "n < 0!!!");
+  let i = ref n and res = ref 1 in
+    while (!i <> 0) do
+      res := !res * !i;
+      i := !i - 1
+    done;
+    !res
+;;
+
+type color = Blue | Red | Green | White;;
+
+type cpointI = {
+  cget: unit -> int;
+  cset: int -> unit;
+  cinc: unit-> unit;
+  getcolor: unit-> color;
+};;
+
+let cpointC x col this () =
+  let super () = pointC x (fun () -> {
+      get = ( fun () -> (this ()).cget());
+      set = ( fun x -> (this ()).cset(x));
+      inc = ( fun () -> (this ()).cinc());
+  }) () in
+  {
+      cget = (fun () -> (super ()).get());
+      cset = (fun x -> (super ()).set(x));
+      cinc = (fun () -> (super ()).inc(); col := White);
+      getcolor = (fun () -> !col);
+  }
+;;
+
+let new_cpoint x col =
+  let x = ref x and col = ref col in
+  let rec this () = cpointC x col this () in
+  this()
+;;
+
+let cp  = new_cpoint 0 Red;;

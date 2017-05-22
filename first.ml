@@ -249,7 +249,6 @@ let rec skip_until n (Cons(x, tail)) =
 ;;
 
 let shift n seq =
-  let start = n * n in
   filter_seq (fun x -> x mod n = 0) seq
 ;;
 
@@ -353,3 +352,28 @@ let new_cpoint x col =
 ;;
 
 let cp  = new_cpoint 0 Red;;
+
+let rec change = function (_,0) -> [] 
+  | ((c::rest) as coins, total) ->
+      if c > total then change (rest,total)
+      else (try c::change (coins, total - c) 
+      with Failure "change" -> change(rest, total) 
+      )
+  | _ -> raise @@ Failure "change"
+;;
+
+let us_coins = [25; 10; 5; 1] and gb_coins = [50; 20; 10; 5; 2; 1];;
+
+let _print_int x = output_string  stdout @@ string_of_int x;;
+
+let cp f1 f2 =
+  let ff1 = open_in f1 and ff2 = open_out f2 in
+  let lines = ref "" in
+  (try
+    while true do
+      lines := !lines ^ input_line ff1 ^ "\n"
+    done;
+  with End_of_file -> ());
+  output_string ff2 !lines;
+  close_out ff2; close_in ff1;
+;;
